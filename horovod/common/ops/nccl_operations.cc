@@ -60,7 +60,6 @@ NCCLAllreduce::NCCLAllreduce(NCCLContext* nccl_context,
       nccl_context_(nccl_context), mpi_context_(mpi_context) {}
 
 Status NCCLAllreduce::Execute(std::vector<TensorTableEntry>& entries, const Response& response) {
-  std::cout << "NCCLAllreduce" << std::endl;
   auto& first_entry = entries[0];
 
   InitCUDA(entries);
@@ -168,7 +167,6 @@ NCCLHierarchicalAllreduce::NCCLHierarchicalAllreduce(NCCLContext* nccl_context, 
                     cuda_context, global_state) {}
 
 Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries, const Response& response) {
-  std::cout << "NCCLHierarchicalAllreduce" << std::endl;
   auto& first_entry = entries[0];
 
   // Determine GPU IDs of the devices participating in this communicator.
@@ -176,9 +174,7 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
   nccl_device_map.reserve(global_state_->local_comm_ranks.size());
   for (int rank : global_state_->local_comm_ranks) {
     nccl_device_map.push_back(response.devices()[rank]);
-    std::cout << rank << ' ';
   }
-  std::cout << std::endl;
 
 
   InitCUDA(entries);
@@ -208,7 +204,6 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
   }
 
   if (response.local_reduction()) {
-    std::cout << "local_reduction" << std::endl;
     // local reduction
     // Do allreduce.
     auto nccl_result = ncclAllReduce(fused_input_data, buffer_data,
