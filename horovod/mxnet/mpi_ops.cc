@@ -50,7 +50,8 @@ inline void InvokeCompleteCallback(CallbackOnComplete on_complete, const Status&
 }
 
 void DoAllreduce(NDArray* tensor, NDArray* output, const std::string& name,
-                 CallbackOnComplete on_complete) {
+                 CallbackOnComplete on_complete, 
+                 bool local_reduction = false) {
   ThrowIfError(common::CheckInitialized());
 
   auto device = TensorUtil::GetDevice(tensor);
@@ -62,7 +63,8 @@ void DoAllreduce(NDArray* tensor, NDArray* output, const std::string& name,
       hvd_context, hvd_tensor, hvd_output, nullptr, name, device,
       [on_complete](const Status& status) {
         InvokeCompleteCallback(on_complete, status);
-      });
+      }, 
+      local_reduction);
   ThrowIfError(enqueue_result);
 }
 
@@ -108,7 +110,8 @@ void DoBroadcast(NDArray* tensor, NDArray* output, std::string& name,
 
 inline void PushHorovodOperation(OperationType op_type, NDArray* input,
                                  NDArray* output, const char* name,
-                                 int priority, int root_rank = -1) {
+                                 int priority, int root_rank = -1, 
+                                 bool local_reduction = false) {
   std::string op_type_name;
   std::string op_name;
   ExecFn exec_fn;
@@ -118,7 +121,7 @@ inline void PushHorovodOperation(OperationType op_type, NDArray* input,
       op_name = GetOpName(op_type_name, name);
       exec_fn = [input, output, op_name]
                 (RunContext rctx, CallbackOnComplete on_complete) mutable {
-        DoAllreduce(input, output, op_name, on_complete);
+        DoAllreduce(input, output, op_name, on_complete, local_reduction);
       };
       break;
     case OperationType::ALLGATHER:
@@ -257,10 +260,15 @@ inline void PushHorovodOperationCudaOnCPU(OperationType op_type, NDArray* input,
 
 extern "C" int horovod_mxnet_allreduce_async(NDArray* input, NDArray* output,
                                              const char* name, bool average,
-                                             int priority) {
+                                             int priority, 
+                                             bool local_reduction) {
   MX_API_BEGIN();
 
 #if HAVE_CUDA && !HOROVOD_GPU_ALLREDUCE
+  // local sgd only works for hierarchical nccl allreduce
+  if (local_reduction) {
+    throw std::logic_error("Local reduction only works for HOROVOD_GPU_ALLREDUCE = nccl");
+  }
   if (input->ctx().dev_mask() == cpu::kDevMask &&
       output->ctx().dev_mask() == cpu::kDevMask) {
     PushHorovodOperation(OperationType::ALLREDUCE, input, output,
@@ -271,7 +279,8 @@ extern "C" int horovod_mxnet_allreduce_async(NDArray* input, NDArray* output,
   }
 #else
   PushHorovodOperation(OperationType::ALLREDUCE, input, output,
-                       name, priority);
+                       name, priority, 
+                       local_reduction);
 #endif
 
   if (average) {

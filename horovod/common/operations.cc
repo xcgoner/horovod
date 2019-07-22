@@ -391,6 +391,9 @@ Response ConstructResponse(std::unique_ptr<MessageTable>& message_table,
   }
   response.set_devices(devices);
 
+  // local sgd
+  response.set_local_reduction(requests[0].local_reduction());
+
   // Clear all queued up requests for this name. They are now taken care of
   // by the constructed MPI response.
   message_table->erase(it);
@@ -1432,7 +1435,8 @@ Status EnqueueTensorAllreduce(std::shared_ptr<OpContext> context,
                               std::shared_ptr<Tensor> output,
                               std::shared_ptr<ReadyEvent> ready_event,
                               const std::string name, const int device,
-                              StatusCallback callback) {
+                              StatusCallback callback, 
+                              const bool local_reduction) {
   Request message;
   message.set_request_rank(horovod_global.rank);
   message.set_tensor_name(name);
@@ -1442,6 +1446,8 @@ Status EnqueueTensorAllreduce(std::shared_ptr<OpContext> context,
   for (int i = 0; i < tensor->shape().dims(); ++i) {
     message.add_tensor_shape((int64_t)tensor->shape().dim_size(i));
   }
+  // local sgd
+  message.set_local_reduction(local_reduction);
 
   TensorTableEntry e;
   e.tensor_name = name;
