@@ -393,6 +393,7 @@ Response ConstructResponse(std::unique_ptr<MessageTable>& message_table,
 
   // local sgd
   response.set_local_reduction(requests[0].local_reduction());
+  std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
 
   // Clear all queued up requests for this name. They are now taken care of
   // by the constructed MPI response.
