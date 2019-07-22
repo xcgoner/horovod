@@ -172,13 +172,11 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
   // Determine GPU IDs of the devices participating in this communicator.
   std::vector<int32_t> nccl_device_map;
   nccl_device_map.reserve(global_state_->local_comm_ranks.size());
-  std::ostringstream buffer; 
   for (int rank : global_state_->local_comm_ranks) {
     nccl_device_map.push_back(response.devices()[rank]);
-    buffer << rank << ' ';
+    std::out << rank << ' ';
   }
 
-  LOG(INFO) << buffer.str() << std::endl;
 
   InitCUDA(entries);
   InitNCCLComm(entries, nccl_device_map);
