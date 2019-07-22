@@ -1454,6 +1454,7 @@ Status EnqueueTensorAllreduce(std::shared_ptr<OpContext> context,
   }
   // local sgd
   message.set_local_reduction(local_reduction);
+  std::cout << "EnqueueTensorAllreduce: " << message.local_reduction() << std::endl;
 
   TensorTableEntry e;
   e.tensor_name = name;
