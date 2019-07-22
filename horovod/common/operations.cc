@@ -392,8 +392,13 @@ Response ConstructResponse(std::unique_ptr<MessageTable>& message_table,
   response.set_devices(devices);
 
   // local sgd
-  response.set_local_reduction(requests[0].local_reduction());
-  std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
+  if (message_type == Request::ALLREDUCE) {
+    response.set_local_reduction(requests[0].local_reduction());
+    std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
+  }
+  else {
+    response.set_local_reduction(false);
+  }
 
   // Clear all queued up requests for this name. They are now taken care of
   // by the constructed MPI response.
@@ -1449,7 +1454,6 @@ Status EnqueueTensorAllreduce(std::shared_ptr<OpContext> context,
   }
   // local sgd
   message.set_local_reduction(local_reduction);
-  std::cout << "EnqueueTensorAllreduce: " << local_reduction << std::endl;
 
   TensorTableEntry e;
   e.tensor_name = name;
