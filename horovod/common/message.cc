@@ -134,6 +134,9 @@ void Request_ParseFromWire(Request& request,
   request.set_device(obj->device());
   request.set_tensor_shape(std::vector<int64_t>(obj->tensor_shape()->begin(),
                                                 obj->tensor_shape()->end()));
+
+  // local 
+  request.set_local_reduction(obj->local_reduction());
 }
 
 void Request_SerializeToWire(const Request& request,
@@ -152,6 +155,10 @@ void Request_SerializeToWire(const Request& request,
   request_builder.add_root_rank(request.root_rank());
   request_builder.add_device(request.device());
   request_builder.add_tensor_shape(tensor_shape_wire);
+
+  // local sgd
+  request_builder.add_local_reduction(request.local_reduction());
+
   obj = request_builder.Finish();
 }
 
@@ -335,6 +342,9 @@ void Response_ParseFromWire(Response& response,
       std::vector<int32_t>(obj->devices()->begin(), obj->devices()->end()));
   response.set_tensor_sizes(std::vector<int64_t>(obj->tensor_sizes()->begin(),
                                                  obj->tensor_sizes()->end()));
+
+  // local 
+  response.set_local_reduction(obj->local_reduction());
 }
 
 void Response::ParseFromBytes(Response& response, const uint8_t* input) {
@@ -359,6 +369,9 @@ void Response_SerializeToWire(const Response& response,
   response_builder.add_error_message(error_message_wire);
   response_builder.add_devices(devices_wire);
   response_builder.add_tensor_sizes(tensor_sizes_wire);
+
+  response_builder.add_local_reduction(response.local_reduction());
+
   obj = response_builder.Finish();
 }
 
