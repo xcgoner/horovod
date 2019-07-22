@@ -110,6 +110,7 @@ def allreduce_(tensor, average=True, name=None, priority=0, local_reduction=Fals
     """
     c_in = tensor.handle
     c_out = tensor.handle
+    print("allreduce_: ", local_reduction)
     if isinstance(name, string_types):
         check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
             c_in, c_out, c_str(name), ctypes.c_bool(average),

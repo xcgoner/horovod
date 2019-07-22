@@ -59,6 +59,8 @@ void DoAllreduce(NDArray* tensor, NDArray* output, const std::string& name,
   auto hvd_context = std::make_shared<MXOpContext<NDArray>>(device, output);
   auto hvd_output = std::make_shared<MXTensor<NDArray>>(output);
 
+  std::cout << "DoAllreduce: " << local_reduction << std::endl;
+
   auto enqueue_result = EnqueueTensorAllreduce(
       hvd_context, hvd_tensor, hvd_output, nullptr, name, device,
       [on_complete](const Status& status) {
@@ -119,6 +121,7 @@ inline void PushHorovodOperation(OperationType op_type, NDArray* input,
     case OperationType::ALLREDUCE:
       op_type_name = "horovod_allreduce";
       op_name = GetOpName(op_type_name, name);
+      std::cout << "PushHorovodOperation: " << local_reduction << std::endl;
       exec_fn = [input, output, op_name, local_reduction]
                 (RunContext rctx, CallbackOnComplete on_complete) mutable {
         DoAllreduce(input, output, op_name, on_complete, local_reduction);
@@ -278,6 +281,7 @@ extern "C" int horovod_mxnet_allreduce_async(NDArray* input, NDArray* output,
                                   name, priority);
   }
 #else
+  std::cout << "horovod_mxnet_allreduce_async: " << local_reduction << std::endl;
   PushHorovodOperation(OperationType::ALLREDUCE, input, output,
                        name, priority, 
                        local_reduction);
