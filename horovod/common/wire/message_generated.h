@@ -83,7 +83,7 @@ inline const char * const *EnumNamesDataType() {
 
 inline const char *EnumNameDataType(DataType e) {
   if (e < DataType_HOROVOD_UINT8 || e > DataType_HOROVOD_BOOL) return "";
-  const size_t index = static_cast<int>(e);
+  const size_t index = static_cast<size_t>(e);
   return EnumNamesDataType()[index];
 }
 
@@ -116,7 +116,7 @@ inline const char * const *EnumNamesRequestType() {
 
 inline const char *EnumNameRequestType(RequestType e) {
   if (e < RequestType_ALLREDUCE || e > RequestType_BROADCAST) return "";
-  const size_t index = static_cast<int>(e);
+  const size_t index = static_cast<size_t>(e);
   return EnumNamesRequestType()[index];
 }
 
@@ -152,7 +152,7 @@ inline const char * const *EnumNamesResponseType() {
 
 inline const char *EnumNameResponseType(ResponseType e) {
   if (e < ResponseType_ALLREDUCE || e > ResponseType_ERROR) return "";
-  const size_t index = static_cast<int>(e);
+  const size_t index = static_cast<size_t>(e);
   return EnumNamesResponseType()[index];
 }
 
@@ -164,7 +164,8 @@ struct Request FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_TENSOR_NAME = 10,
     VT_ROOT_RANK = 12,
     VT_DEVICE = 14,
-    VT_TENSOR_SHAPE = 16
+    VT_TENSOR_SHAPE = 16,
+    VT_LOCAL_REDUCTION = 18
   };
   int32_t request_rank() const {
     return GetField<int32_t>(VT_REQUEST_RANK, 0);
@@ -187,6 +188,9 @@ struct Request FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<int64_t> *tensor_shape() const {
     return GetPointer<const flatbuffers::Vector<int64_t> *>(VT_TENSOR_SHAPE);
   }
+  bool local_reduction() const {
+    return GetField<uint8_t>(VT_LOCAL_REDUCTION, 0) != 0;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int32_t>(verifier, VT_REQUEST_RANK) &&
@@ -198,6 +202,7 @@ struct Request FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<int32_t>(verifier, VT_DEVICE) &&
            VerifyOffset(verifier, VT_TENSOR_SHAPE) &&
            verifier.VerifyVector(tensor_shape()) &&
+           VerifyField<uint8_t>(verifier, VT_LOCAL_REDUCTION) &&
            verifier.EndTable();
   }
 };
@@ -226,6 +231,9 @@ struct RequestBuilder {
   void add_tensor_shape(flatbuffers::Offset<flatbuffers::Vector<int64_t>> tensor_shape) {
     fbb_.AddOffset(Request::VT_TENSOR_SHAPE, tensor_shape);
   }
+  void add_local_reduction(bool local_reduction) {
+    fbb_.AddElement<uint8_t>(Request::VT_LOCAL_REDUCTION, static_cast<uint8_t>(local_reduction), 0);
+  }
   explicit RequestBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -246,13 +254,15 @@ inline flatbuffers::Offset<Request> CreateRequest(
     flatbuffers::Offset<flatbuffers::String> tensor_name = 0,
     int32_t root_rank = 0,
     int32_t device = 0,
-    flatbuffers::Offset<flatbuffers::Vector<int64_t>> tensor_shape = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<int64_t>> tensor_shape = 0,
+    bool local_reduction = false) {
   RequestBuilder builder_(_fbb);
   builder_.add_tensor_shape(tensor_shape);
   builder_.add_device(device);
   builder_.add_root_rank(root_rank);
   builder_.add_tensor_name(tensor_name);
   builder_.add_request_rank(request_rank);
+  builder_.add_local_reduction(local_reduction);
   builder_.add_tensor_type(tensor_type);
   builder_.add_request_type(request_type);
   return builder_.Finish();
@@ -266,7 +276,8 @@ inline flatbuffers::Offset<Request> CreateRequestDirect(
     const char *tensor_name = nullptr,
     int32_t root_rank = 0,
     int32_t device = 0,
-    const std::vector<int64_t> *tensor_shape = nullptr) {
+    const std::vector<int64_t> *tensor_shape = nullptr,
+    bool local_reduction = false) {
   auto tensor_name__ = tensor_name ? _fbb.CreateString(tensor_name) : 0;
   auto tensor_shape__ = tensor_shape ? _fbb.CreateVector<int64_t>(*tensor_shape) : 0;
   return horovod::common::wire::CreateRequest(
@@ -277,7 +288,8 @@ inline flatbuffers::Offset<Request> CreateRequestDirect(
       tensor_name__,
       root_rank,
       device,
-      tensor_shape__);
+      tensor_shape__,
+      local_reduction);
 }
 
 struct RequestList FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -349,7 +361,8 @@ struct Response FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_TENSOR_NAMES = 6,
     VT_ERROR_MESSAGE = 8,
     VT_DEVICES = 10,
-    VT_TENSOR_SIZES = 12
+    VT_TENSOR_SIZES = 12,
+    VT_LOCAL_REDUCTION = 14
   };
   ResponseType response_type() const {
     return static_cast<ResponseType>(GetField<int8_t>(VT_RESPONSE_TYPE, 0));
@@ -366,6 +379,9 @@ struct Response FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<int64_t> *tensor_sizes() const {
     return GetPointer<const flatbuffers::Vector<int64_t> *>(VT_TENSOR_SIZES);
   }
+  bool local_reduction() const {
+    return GetField<uint8_t>(VT_LOCAL_REDUCTION, 0) != 0;
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<int8_t>(verifier, VT_RESPONSE_TYPE) &&
@@ -378,6 +394,7 @@ struct Response FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyVector(devices()) &&
            VerifyOffset(verifier, VT_TENSOR_SIZES) &&
            verifier.VerifyVector(tensor_sizes()) &&
+           VerifyField<uint8_t>(verifier, VT_LOCAL_REDUCTION) &&
            verifier.EndTable();
   }
 };
@@ -400,6 +417,9 @@ struct ResponseBuilder {
   void add_tensor_sizes(flatbuffers::Offset<flatbuffers::Vector<int64_t>> tensor_sizes) {
     fbb_.AddOffset(Response::VT_TENSOR_SIZES, tensor_sizes);
   }
+  void add_local_reduction(bool local_reduction) {
+    fbb_.AddElement<uint8_t>(Response::VT_LOCAL_REDUCTION, static_cast<uint8_t>(local_reduction), 0);
+  }
   explicit ResponseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -418,12 +438,14 @@ inline flatbuffers::Offset<Response> CreateResponse(
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<flatbuffers::String>>> tensor_names = 0,
     flatbuffers::Offset<flatbuffers::String> error_message = 0,
     flatbuffers::Offset<flatbuffers::Vector<int32_t>> devices = 0,
-    flatbuffers::Offset<flatbuffers::Vector<int64_t>> tensor_sizes = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<int64_t>> tensor_sizes = 0,
+    bool local_reduction = false) {
   ResponseBuilder builder_(_fbb);
   builder_.add_tensor_sizes(tensor_sizes);
   builder_.add_devices(devices);
   builder_.add_error_message(error_message);
   builder_.add_tensor_names(tensor_names);
+  builder_.add_local_reduction(local_reduction);
   builder_.add_response_type(response_type);
   return builder_.Finish();
 }
@@ -434,7 +456,8 @@ inline flatbuffers::Offset<Response> CreateResponseDirect(
     const std::vector<flatbuffers::Offset<flatbuffers::String>> *tensor_names = nullptr,
     const char *error_message = nullptr,
     const std::vector<int32_t> *devices = nullptr,
-    const std::vector<int64_t> *tensor_sizes = nullptr) {
+    const std::vector<int64_t> *tensor_sizes = nullptr,
+    bool local_reduction = false) {
   auto tensor_names__ = tensor_names ? _fbb.CreateVector<flatbuffers::Offset<flatbuffers::String>>(*tensor_names) : 0;
   auto error_message__ = error_message ? _fbb.CreateString(error_message) : 0;
   auto devices__ = devices ? _fbb.CreateVector<int32_t>(*devices) : 0;
@@ -445,7 +468,8 @@ inline flatbuffers::Offset<Response> CreateResponseDirect(
       tensor_names__,
       error_message__,
       devices__,
-      tensor_sizes__);
+      tensor_sizes__,
+      local_reduction);
 }
 
 struct ResponseList FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
