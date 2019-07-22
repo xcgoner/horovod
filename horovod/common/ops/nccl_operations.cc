@@ -17,7 +17,6 @@
 #include "nccl_operations.h"
 
 #include "../logging.h"
-#include <iostream>
 
 namespace horovod {
 namespace common {
@@ -175,7 +174,7 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
   nccl_device_map.reserve(global_state_->local_comm_ranks.size());
   for (int rank : global_state_->local_comm_ranks) {
     nccl_device_map.push_back(response.devices()[rank]);
-    std::out << rank << ' ';
+    std::cout << rank << ' ';
   }
 
 
