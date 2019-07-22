@@ -59,7 +59,6 @@ void DoAllreduce(NDArray* tensor, NDArray* output, const std::string& name,
   auto hvd_context = std::make_shared<MXOpContext<NDArray>>(device, output);
   auto hvd_output = std::make_shared<MXTensor<NDArray>>(output);
 
-  std::cout << local_reduction << std::endl;
   auto enqueue_result = EnqueueTensorAllreduce(
       hvd_context, hvd_tensor, hvd_output, nullptr, name, device,
       [on_complete](const Status& status) {
