@@ -56,6 +56,9 @@ table Request {
     // We use a repeated integer instead of a TensorShapeProto because linking directly
     // to TensorFlow protos causes issues. See the comment for DataType.
     tensor_shape:[long];
+
+    // Local reduction
+    local_reduction:bool;
 }
 table RequestList {
     requests:[Request];
@@ -92,6 +95,9 @@ table Response {
     // These tensor sizes are the dimension zero sizes of all the input matrices,
     // indexed by the rank.
     tensor_sizes:[long];
+
+    // Local reduction
+    local_reduction:bool;
 }
 table ResponseList {
     responses:[Response];
