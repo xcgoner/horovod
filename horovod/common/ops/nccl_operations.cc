@@ -178,6 +178,7 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
     nccl_device_map.push_back(response.devices()[rank]);
     std::cout << rank << ' ';
   }
+  std::cout << std::endl;
 
 
   InitCUDA(entries);
@@ -207,6 +208,7 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
   }
 
   if (response.local_reduction()) {
+    std::cout << "local_reduction" << std::endl;
     // local reduction
     // Do allreduce.
     auto nccl_result = ncclAllReduce(fused_input_data, buffer_data,
