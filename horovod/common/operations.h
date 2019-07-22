@@ -86,12 +86,14 @@ int horovod_local_size();
 int horovod_mpi_threads_supported();
 }
 
+// local sgd
 Status EnqueueTensorAllreduce(std::shared_ptr<OpContext> context,
                               std::shared_ptr<Tensor> tensor,
                               std::shared_ptr<Tensor> output,
                               std::shared_ptr<ReadyEvent> ready_event,
                               const std::string name, const int device,
-                              StatusCallback callback);
+                              StatusCallback callback,
+                              const bool local_reduction = false);
 
 Status EnqueueTensorAllgather(std::shared_ptr<OpContext> context,
                               std::shared_ptr<Tensor> tensor,

@@ -116,6 +116,12 @@ void Request::add_tensor_shape(int64_t value) {
   tensor_shape_.push_back(value);
 }
 
+// local sgd
+
+bool Request::local_reduction() const { return local_reduction_; }
+
+void Request::set_local_reduction(bool value) { local_reduction_ = value; }
+
 namespace {
 
 void Request_ParseFromWire(Request& request,
@@ -312,6 +318,11 @@ void Response::add_allgather_response(const Response& response) {
     add_tensor_size(size);
   }
 }
+
+// local sgd
+bool Response::local_reduction() const { return local_reduction_; }
+
+void Response::set_local_reduction(bool value) { local_reduction_ = value; }
 
 void Response_ParseFromWire(Response& response,
                             const wire::Response* obj) {

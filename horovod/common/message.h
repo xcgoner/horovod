@@ -87,6 +87,10 @@ public:
 
   static void SerializeToString(const Request& request, std::string& output);
 
+  // local sgd
+  bool local_reduction() const;
+  void set_local_reduction(bool value);
+
 private:
   int32_t request_rank_ = 0;
   RequestType request_type_ = RequestType::ALLREDUCE;
@@ -95,6 +99,9 @@ private:
   int32_t device_ = 0;
   std::string tensor_name_;
   std::vector<int64_t> tensor_shape_;
+
+  // local sgd
+  bool local_reduction_;
 };
 
 class RequestList {
@@ -176,12 +183,19 @@ public:
   static void SerializeToString(const Response& response,
                                 std::string& output);
 
+  // local sgd
+  bool local_reduction() const;
+  void set_local_reduction(bool value);
+
 private:
   ResponseType response_type_ = ResponseType::ALLREDUCE;
   std::vector<std::string> tensor_names_;
   std::string error_message_;
   std::vector<int32_t> devices_;
   std::vector<int64_t> tensor_sizes_;
+
+  // local sgd
+  bool local_reduction_;
 };
 
 class ResponseList {

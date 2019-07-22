@@ -202,6 +202,30 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
     num_elements += e.tensor->shape().num_elements();
   }
 
+  if (response.local_reduction()) {
+    // local reduction
+    // Do allreduce.
+    auto nccl_result = ncclAllReduce(fused_input_data, buffer_data,
+                                    (size_t) num_elements,
+                                    GetNCCLDataType(first_entry.tensor), ncclSum,
+                                    *nccl_comm_, *stream_);
+    nccl_context_->ErrorCheck("ncclAllReduce", nccl_result);
+    if (global_state_->timeline.Initialized()) {
+      cuda_context_->RecordEvent(event_queue_, NCCL_ALLREDUCE, *stream_);
+    }
+
+    // Copy memory out of the fusion buffer.
+    if (entries.size() > 1) {
+      MemcpyOutFusionBuffer(buffer_data, entries);
+
+      if (global_state_->timeline.Initialized()) {
+        cuda_context_->RecordEvent(event_queue_, MEMCPY_OUT_FUSION_BUFFER, *stream_);
+      }
+    }
+
+    return FinalizeCUDAQueue(entries);
+  }
+
   // Do allreduce.
   int element_size = mpi_context_->GetMPITypeSize(first_entry.tensor->dtype());
 
