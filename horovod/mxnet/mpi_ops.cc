@@ -119,7 +119,7 @@ inline void PushHorovodOperation(OperationType op_type, NDArray* input,
     case OperationType::ALLREDUCE:
       op_type_name = "horovod_allreduce";
       op_name = GetOpName(op_type_name, name);
-      exec_fn = [input, output, op_name]
+      exec_fn = [input, output, op_name, local_reduction]
                 (RunContext rctx, CallbackOnComplete on_complete) mutable {
         DoAllreduce(input, output, op_name, on_complete, local_reduction);
       };
