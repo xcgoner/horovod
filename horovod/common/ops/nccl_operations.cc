@@ -178,7 +178,7 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
     buffer << rank << ' ';
   }
 
-  LOG(INFO) << buffer.str();
+  LOG(INFO) << buffer.str() << std::endl;
 
   InitCUDA(entries);
   InitNCCLComm(entries, nccl_device_map);
