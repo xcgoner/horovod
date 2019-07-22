@@ -17,6 +17,7 @@
 #include "nccl_operations.h"
 
 #include "../logging.h"
+#include <iostream>
 
 namespace horovod {
 namespace common {
