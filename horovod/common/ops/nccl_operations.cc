@@ -205,8 +205,8 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
 
   if (response.local_reduction()) {
     // local reduction
-    // debug
-    std::cout << "local reduction" << std::endl;
+    // // debug
+    // std::cout << "local reduction" << std::endl;
     // Do allreduce.
     auto nccl_result = ncclAllReduce(fused_input_data, buffer_data,
                                     (size_t) num_elements,
@@ -297,8 +297,8 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
 
   if (!response.cross_only()) {
     // skip reduce if cross_only == True
-    // debug
-    std::cout << "global reduction" << std::endl;
+    // // debug
+    // std::cout << "global reduction" << std::endl;
     if (num_elements_per_rank > 0) {
       auto nccl_result = ncclReduceScatter(fused_input_data,
                                           buffer_data_at_rank_offset,
@@ -325,10 +325,10 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
       }
     }
   }
-  else {
-    // debug
-    std::cout << "cross reduction" << std::endl;
-  }
+  // else {
+  //   // debug
+  //   std::cout << "cross reduction" << std::endl;
+  // }
 
   if (global_state_->is_homogeneous || is_root_rank) {
     // cudaHostAlloc is significantly slower than malloc.  Pre-allocating
