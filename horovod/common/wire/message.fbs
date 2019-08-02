@@ -59,6 +59,7 @@ table Request {
 
     // Local reduction
     local_reduction:bool;
+    cross_only:bool;
 }
 table RequestList {
     requests:[Request];
@@ -98,6 +99,7 @@ table Response {
 
     // Local reduction
     local_reduction:bool;
+    cross_only:bool;
 }
 table ResponseList {
     responses:[Response];

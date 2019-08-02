@@ -42,7 +42,7 @@ dll_path = os.path.join(os.path.dirname(__file__),
 MPI_MXNET_LIB_CTYPES = ctypes.CDLL(dll_path, ctypes.RTLD_GLOBAL)
 
 
-def allreduce(tensor, average=True, name=None, priority=0, local_reduction=False):
+def allreduce(tensor, average=True, name=None, priority=0, local_reduction=False, cross_only=False):
     """
     A function that performs averaging or summation of the input tensor over
     all the Horovod processes. The input tensor is not modified.
@@ -76,17 +76,19 @@ def allreduce(tensor, average=True, name=None, priority=0, local_reduction=False
         check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
             c_in, c_out, c_str(name), ctypes.c_bool(average),
             ctypes.c_int(priority), 
-            ctypes.c_bool(local_reduction)))
+            ctypes.c_bool(local_reduction), 
+            ctypes.c_bool(cross_only)))
     else:
         check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
             c_in, c_out, name, ctypes.c_bool(average),
             ctypes.c_int(priority), 
-            ctypes.c_bool(local_reduction)))
+            ctypes.c_bool(local_reduction), 
+            ctypes.c_bool(cross_only)))
 
     return output
 
 
-def allreduce_(tensor, average=True, name=None, priority=0, local_reduction=False):
+def allreduce_(tensor, average=True, name=None, priority=0, local_reduction=False, cross_only=False):
     """
     A function that performs in-place averaging or summation of the input
     tensor over all the Horovod processes.
@@ -115,12 +117,14 @@ def allreduce_(tensor, average=True, name=None, priority=0, local_reduction=Fals
         check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
             c_in, c_out, c_str(name), ctypes.c_bool(average),
             ctypes.c_int(priority), 
-            ctypes.c_bool(local_reduction)))
+            ctypes.c_bool(local_reduction), 
+            ctypes.c_bool(cross_only)))
     else:
         check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
             c_in, c_out, name, ctypes.c_bool(average),
             ctypes.c_int(priority), 
-            ctypes.c_bool(local_reduction)))
+            ctypes.c_bool(local_reduction), 
+            ctypes.c_bool(cross_only)))
     return tensor
 
 

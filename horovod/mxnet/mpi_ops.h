@@ -37,7 +37,8 @@ typedef std::shared_ptr<MXTemporaryBuffer<NDArray>> MXTempBufferShared;
 extern "C" int horovod_mxnet_allreduce_async(NDArray* input, NDArray* output,
                                              const char* name, bool average,
                                              int priority, 
-                                             bool local_reduction);
+                                             bool local_reduction, 
+                                             bool cross_only);
 extern "C" int horovod_mxnet_allgather_async(NDArray* input, NDArray* output,
                                              const char* name, int priority);
 extern "C" int horovod_mxnet_broadcast_async(NDArray* input, NDArray* output,

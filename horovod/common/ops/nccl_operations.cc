@@ -292,29 +292,33 @@ Status NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries
                    : buffer_len_per_rank;
 
   auto& timeline = global_state_->timeline;
-  if (num_elements_per_rank > 0) {
-    auto nccl_result = ncclReduceScatter(fused_input_data,
-                                         buffer_data_at_rank_offset,
-                                         (size_t) num_elements_per_rank,
-                                         GetNCCLDataType(first_entry.tensor),
-                                         ncclSum, *nccl_comm_, *stream_);
-    nccl_context_->ErrorCheck("ncclReduceScatter", nccl_result);
-    if (global_state_->timeline.Initialized()) {
-      cuda_context_->RecordEvent(event_queue_, NCCL_REDUCESCATTER, *stream_);
-    }
-  }
 
-  if (num_elements_remaining > 0) {
-    // Reduce the remaining data at local_size-1 to append to
-    // existing buffer
-    auto nccl_result = ncclReduce(fused_input_data_remainder,
-                                  buffer_data_remainder,
-                                  (size_t) num_elements_remaining,
-                                  GetNCCLDataType(first_entry.tensor), ncclSum,
-                                  root_rank, *nccl_comm_, *stream_);
-    nccl_context_->ErrorCheck("ncclReduce", nccl_result);
-    if (global_state_->timeline.Initialized()) {
-      cuda_context_->RecordEvent(event_queue_, NCCL_REDUCE, *stream_);
+  if (!response.cross_only()) {
+    // skip reduce if cross_only == True
+    if (num_elements_per_rank > 0) {
+      auto nccl_result = ncclReduceScatter(fused_input_data,
+                                          buffer_data_at_rank_offset,
+                                          (size_t) num_elements_per_rank,
+                                          GetNCCLDataType(first_entry.tensor),
+                                          ncclSum, *nccl_comm_, *stream_);
+      nccl_context_->ErrorCheck("ncclReduceScatter", nccl_result);
+      if (global_state_->timeline.Initialized()) {
+        cuda_context_->RecordEvent(event_queue_, NCCL_REDUCESCATTER, *stream_);
+      }
+    }
+
+    if (num_elements_remaining > 0) {
+      // Reduce the remaining data at local_size-1 to append to
+      // existing buffer
+      auto nccl_result = ncclReduce(fused_input_data_remainder,
+                                    buffer_data_remainder,
+                                    (size_t) num_elements_remaining,
+                                    GetNCCLDataType(first_entry.tensor), ncclSum,
+                                    root_rank, *nccl_comm_, *stream_);
+      nccl_context_->ErrorCheck("ncclReduce", nccl_result);
+      if (global_state_->timeline.Initialized()) {
+        cuda_context_->RecordEvent(event_queue_, NCCL_REDUCE, *stream_);
+      }
     }
   }
 

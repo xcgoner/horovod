@@ -394,10 +394,12 @@ Response ConstructResponse(std::unique_ptr<MessageTable>& message_table,
   // local sgd
   if (message_type == Request::ALLREDUCE) {
     response.set_local_reduction(requests[0].local_reduction());
+    response.set_cross_only(requests[0].cross_only());
     // std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
   }
   else {
     response.set_local_reduction(false);
+    response.set_cross_only(false);
   }
 
   // Clear all queued up requests for this name. They are now taken care of
@@ -1442,7 +1444,8 @@ Status EnqueueTensorAllreduce(std::shared_ptr<OpContext> context,
                               std::shared_ptr<ReadyEvent> ready_event,
                               const std::string name, const int device,
                               StatusCallback callback, 
-                              const bool local_reduction) {
+                              const bool local_reduction, 
+                              const bool cross_only) {
   Request message;
   message.set_request_rank(horovod_global.rank);
   message.set_tensor_name(name);
@@ -1454,6 +1457,7 @@ Status EnqueueTensorAllreduce(std::shared_ptr<OpContext> context,
   }
   // local sgd
   message.set_local_reduction(local_reduction);
+  message.set_cross_only(cross_only);
   // std::cout << "EnqueueTensorAllreduce: " << message.local_reduction() << std::endl;
 
   TensorTableEntry e;
