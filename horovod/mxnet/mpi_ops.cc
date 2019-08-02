@@ -301,7 +301,7 @@ extern "C" int horovod_mxnet_allreduce_async(NDArray* input, NDArray* output,
     if (local_reduction) {
       *output /= horovod_local_size();
     }
-    else if {
+    else if (cross_only) {
       // only works for the homogeneous cases
       *output /= (horovod_size() / horovod_local_size());
     }
