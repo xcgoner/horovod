@@ -271,6 +271,10 @@ extern "C" int horovod_mxnet_allreduce_async(NDArray* input, NDArray* output,
                                              bool cross_only) {
   MX_API_BEGIN();
 
+  if (local_reduction && cross_only) {
+    throw std::logic_error("local_reduction and cross_only cannot be True at the same time");
+  }
+
 #if HAVE_CUDA && !HOROVOD_GPU_ALLREDUCE
   // local sgd only works for hierarchical nccl allreduce
   if (local_reduction || cross_only) {
@@ -296,6 +300,10 @@ extern "C" int horovod_mxnet_allreduce_async(NDArray* input, NDArray* output,
   if (average) {
     if (local_reduction) {
       *output /= horovod_local_size();
+    }
+    else if {
+      // only works for the homogeneous cases
+      *output /= (horovod_size() / horovod_local_size());
     }
     else {
       *output /= horovod_size();
