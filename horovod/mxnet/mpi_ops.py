@@ -157,15 +157,18 @@ def allgather(tensor, name=None, priority=0):
     """
     assert(isinstance(tensor, mx.nd.NDArray))
 
-    # reduce shape first
-    output_dim = mx.nd.array([tensor.shape[0]])
-    print(tensor.shape)
-    allreduce_(output_dim, average=False)
-    new_shape = list(tensor.shape)
-    new_shape[0] = int(np.asscalar(output_dim.asscalar()))
-    print(new_shape)
+    # # reduce shape first
+    # output_dim = mx.nd.array([tensor.shape[0]])
+    # print(tensor.shape)
+    # allreduce_(output_dim, average=False)
+    # new_shape = list(tensor.shape)
+    # new_shape[0] = int(np.asscalar(output_dim.asscalar()))
+    # print(new_shape)
 
-    output = mx.nd.zeros(shape=tuple(new_shape), ctx=tensor.context,
+    # output = mx.nd.zeros(shape=tuple(new_shape), ctx=tensor.context,
+    #                      dtype=tensor.dtype)
+
+    output = mx.nd.zeros(shape=tensor.shape, ctx=tensor.context,
                          dtype=tensor.dtype)
     c_in = tensor.handle
     c_out = output.handle
