@@ -168,7 +168,7 @@ def allgather(tensor, name=None, priority=0):
     # output = mx.nd.zeros(shape=tuple(new_shape), ctx=tensor.context,
     #                      dtype=tensor.dtype)
 
-    output = mx.nd.zeros(shape=(1,16)), ctx=tensor.context,
+    output = mx.nd.zeros(shape=(1,16), ctx=tensor.context,
                          dtype=tensor.dtype)
     print(output.shape)
     c_in = tensor.handle
