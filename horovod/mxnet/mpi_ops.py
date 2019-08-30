@@ -24,6 +24,8 @@ import os
 import mxnet as mx
 from mxnet.base import c_str, check_call, string_types
 
+import numpy as np
+
 from horovod.common import get_ext_suffix
 from horovod.common import HorovodBasics as _HorovodBasics
 _basics = _HorovodBasics(__file__, 'mpi_lib')
@@ -154,7 +156,14 @@ def allgather(tensor, name=None, priority=0):
         first dimensions of the tensors in different Horovod processes.
     """
     assert(isinstance(tensor, mx.nd.NDArray))
-    output = mx.nd.zeros(shape=tensor.shape, ctx=tensor.context,
+
+    # reduce shape first
+    output_dim = mx.nd.array([tensor.shape[0]])
+    allreduce_(output_dim)
+    new_shape = list(tensor.shape)
+    new_shape[0] = int(np.asscalar(output_dim.asscalar))
+
+    output = mx.nd.zeros(shape=tuple(new_shape), ctx=tensor.context,
                          dtype=tensor.dtype)
     c_in = tensor.handle
     c_out = output.handle
