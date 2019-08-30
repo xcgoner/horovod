@@ -170,6 +170,7 @@ def allgather(tensor, name=None, priority=0):
 
     output = mx.nd.zeros(shape=tensor.shape, ctx=tensor.context,
                          dtype=tensor.dtype)
+    print(output.shape)
     c_in = tensor.handle
     c_out = output.handle
     if isinstance(name, string_types):
