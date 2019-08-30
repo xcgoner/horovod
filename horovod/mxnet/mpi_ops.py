@@ -159,7 +159,9 @@ def allgather(tensor, name=None, priority=0):
 
     # reduce shape first
     output_dim = mx.nd.array([tensor.shape[0]])
+    print(output_dim.asscalar())
     allreduce_(output_dim, average=False)
+    print(output_dim.asscalar())
     new_shape = list(tensor.shape)
     new_shape[0] = int(np.asscalar(output_dim.asscalar()))
 
