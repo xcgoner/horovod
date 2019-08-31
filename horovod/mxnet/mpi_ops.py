@@ -129,7 +129,6 @@ def allreduce_(tensor, average=True, name=None, priority=0, local_reduction=Fals
             ctypes.c_bool(cross_only)))
     return tensor
 
-
 def allgather(tensor, name=None, priority=0):
     """
     A function that concatenates the input tensor with the same input tensor on
@@ -190,6 +189,18 @@ def allgather(tensor, name=None, priority=0):
 
     return output
 
+def allreduce_rs(row_sparse_tensor, average=True, name=None, priority=0, local_reduction=False, cross_only=False):
+    """
+    A function that performs allreduce for row-sparse ndarrays
+    """
+    assert(isinstance(row_sparse_tensor, mx.nd.sparse.RowSparseNDArray))
+
+    # TODO(xcong): local reduction
+    reduced_data = allgather(row_sparse_tensor.data)
+    reduced_indices = allgather(row_sparse_tensor.indices)
+    output = mx.nd.sparse.row_sparse_array((reduced_data, reduced_indices), shape=row_sparse_tensor.shape)
+
+    return output
 
 def broadcast(tensor, root_rank, name=None, priority=0):
     """
