@@ -157,28 +157,43 @@ def allgather(tensor, name=None, priority=0):
     """
     assert(isinstance(tensor, mx.nd.NDArray))
 
-    # # reduce shape first
-    # output_dim = mx.nd.array([tensor.shape[0]])
-    # print(tensor.shape)
-    # allreduce_(output_dim, average=False)
-    # new_shape = list(tensor.shape)
-    # new_shape[0] = int(np.asscalar(output_dim.asscalar()))
-    # print(new_shape)
+    # reduce shape first
+    output_dims = mx.nd.zeros((1, size))
+    output_dims[0, rank] = tensor.shape[0]
+    print(output_dims)
+    allreduce_(output_dims, average=False)
+    new_shape = list(tensor.shape)
+    new_shape[0] = int(np.asscalar(output_dims.sum().asscalar()))
+    print(new_shape)
 
-    # output = mx.nd.zeros(shape=tuple(new_shape), ctx=tensor.context,
-    #                      dtype=tensor.dtype)
-
-    output = mx.nd.zeros(shape=(1,16), ctx=tensor.context,
+    output = mx.nd.zeros(shape=tuple(new_shape), ctx=tensor.context,
                          dtype=tensor.dtype)
-    print(output.shape)
-    c_in = tensor.handle
+
+    c_in = output.handle
     c_out = output.handle
+    # print("allreduce_: ", local_reduction)
     if isinstance(name, string_types):
-        check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allgather_async(
-            c_in, c_out, c_str(name), ctypes.c_int(priority)))
+        check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
+            c_in, c_out, c_str(name), ctypes.c_bool(average),
+            ctypes.c_int(priority), 
+            ctypes.c_bool(local_reduction), 
+            ctypes.c_bool(cross_only)))
     else:
-        check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allgather_async(
-            c_in, c_out, name, ctypes.c_int(priority)))
+        check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
+            c_in, c_out, name, ctypes.c_bool(average),
+            ctypes.c_int(priority), 
+            ctypes.c_bool(local_reduction), 
+            ctypes.c_bool(cross_only)))
+
+    # c_in = tensor.handle
+    # c_out = output.handle
+    # if isinstance(name, string_types):
+    #     check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allgather_async(
+    #         c_in, c_out, c_str(name), ctypes.c_int(priority)))
+    # else:
+    #     check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allgather_async(
+    #         c_in, c_out, name, ctypes.c_int(priority)))
+
     return output
 
 
