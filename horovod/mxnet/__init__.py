@@ -23,7 +23,7 @@ check_extension('horovod.mxnet', 'HOROVOD_WITH_MXNET',
                 __file__, 'mpi_lib')
 
 from horovod.mxnet.mpi_ops import allgather
-from horovod.mxnet.mpi_ops import allreduce, allreduce_
+from horovod.mxnet.mpi_ops import allreduce, allreduce_, allreduce_rsp
 from horovod.mxnet.mpi_ops import broadcast, broadcast_
 from horovod.mxnet.mpi_ops import init, shutdown
 from horovod.mxnet.mpi_ops import size, local_size, rank, local_rank

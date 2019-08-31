@@ -189,7 +189,7 @@ def allgather(tensor, name=None, priority=0):
 
     return output
 
-def allreduce_rs(row_sparse_tensor, average=True, name=None, priority=0, local_reduction=False, cross_only=False):
+def allreduce_rsp(row_sparse_tensor, average=True, name=None, priority=0, local_reduction=False, cross_only=False):
     """
     A function that performs allreduce for row-sparse ndarrays
     """
