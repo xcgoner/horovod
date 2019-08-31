@@ -162,12 +162,20 @@ def allgather(tensor, name=None, priority=0):
     output_dims[0, rank] = tensor.shape[0]
     print(output_dims)
     allreduce_(output_dims, average=False)
+    output_dims_cum = np.cumsum(output_dims.asnumpy())
     new_shape = list(tensor.shape)
-    new_shape[0] = int(np.asscalar(output_dims.sum().asscalar()))
+    new_shape[0] = int(np.asscalar(output_dims_cum[-1]))
     print(new_shape)
 
     output = mx.nd.zeros(shape=tuple(new_shape), ctx=tensor.context,
                          dtype=tensor.dtype)
+    
+    if rank == 0:
+        start_ind = 0
+    else:
+        start_ind = int(np.asscalar(output_dims_cum[rank-1]))
+    end_ind = int(np.asscalar(output_dims_cum[rank]))
+    output[start_ind:end_ind][:] = tensor
 
     c_in = output.handle
     c_out = output.handle
