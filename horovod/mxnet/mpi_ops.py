@@ -196,6 +196,8 @@ def allreduce_rsp(row_sparse_tensor, average=True, name=None, priority=0, local_
     assert(isinstance(row_sparse_tensor, mx.nd.sparse.RowSparseNDArray))
 
     # TODO(xcong): local reduction
+    print(row_sparse_tensor.data)
+    print(row_sparse_tensor.indices)
     reduced_data = allgather(row_sparse_tensor.data)
     reduced_indices = allgather(row_sparse_tensor.indices)
     output = mx.nd.sparse.row_sparse_array((reduced_data, reduced_indices), shape=row_sparse_tensor.shape)
