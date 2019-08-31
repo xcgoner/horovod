@@ -158,8 +158,8 @@ def allgather(tensor, name=None, priority=0):
     assert(isinstance(tensor, mx.nd.NDArray))
 
     # reduce shape first
-    output_dims = mx.nd.zeros((1, size))
-    output_dims[0, rank] = tensor.shape[0]
+    output_dims = mx.nd.zeros((1, size()))
+    output_dims[0, rank()] = tensor.shape[0]
     print(output_dims)
     allreduce_(output_dims, average=False)
     output_dims_cum = np.cumsum(output_dims.asnumpy())
@@ -170,28 +170,14 @@ def allgather(tensor, name=None, priority=0):
     output = mx.nd.zeros(shape=tuple(new_shape), ctx=tensor.context,
                          dtype=tensor.dtype)
     
-    if rank == 0:
+    if rank() == 0:
         start_ind = 0
     else:
-        start_ind = int(np.asscalar(output_dims_cum[rank-1]))
-    end_ind = int(np.asscalar(output_dims_cum[rank]))
+        start_ind = int(np.asscalar(output_dims_cum[rank()-1]))
+    end_ind = int(np.asscalar(output_dims_cum[rank()]))
     output[start_ind:end_ind][:] = tensor
 
-    c_in = output.handle
-    c_out = output.handle
-    # print("allreduce_: ", local_reduction)
-    if isinstance(name, string_types):
-        check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
-            c_in, c_out, c_str(name), ctypes.c_bool(average),
-            ctypes.c_int(priority), 
-            ctypes.c_bool(local_reduction), 
-            ctypes.c_bool(cross_only)))
-    else:
-        check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
-            c_in, c_out, name, ctypes.c_bool(average),
-            ctypes.c_int(priority), 
-            ctypes.c_bool(local_reduction), 
-            ctypes.c_bool(cross_only)))
+    allreduce_(output, average=False)
 
     # c_in = tensor.handle
     # c_out = output.handle
