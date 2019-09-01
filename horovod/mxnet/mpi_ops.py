@@ -202,6 +202,7 @@ def allreduce_rsp(row_sparse_tensor, average=True, name=None, priority=0, local_
     """
     assert(isinstance(row_sparse_tensor, mx.nd.sparse.RowSparseNDArray))
 
+    # TODO(xcong): local reduction
     # TODO(xcong): empty indices
     # print(row_sparse_tensor.data)
     # print(row_sparse_tensor.indices)
@@ -254,6 +255,8 @@ def allreduce_rsp(row_sparse_tensor, average=True, name=None, priority=0, local_
         end_ind = int(np.asscalar(output_dims_cum[i]))
         output += mx.nd.sparse.row_sparse_array((output_data[start_ind:end_ind][:], output_indices[start_ind:end_ind][:]), shape=row_sparse_tensor.shape)
 
+    if average:
+        output /= size()
     return output
 
 def broadcast(tensor, root_rank, name=None, priority=0):
