@@ -129,7 +129,7 @@ def allreduce_(tensor, average=True, name=None, priority=0, local_reduction=Fals
             ctypes.c_bool(cross_only)))
     return tensor
 
-def allgather(tensor, name=None, priority=0):
+def allgather(tensor, name=None, priority=0, local_reduction=False, cross_only=False):
     """
     A function that concatenates the input tensor with the same input tensor on
     all other Horovod processes. The input tensor is not modified.
@@ -156,11 +156,18 @@ def allgather(tensor, name=None, priority=0):
     """
     assert(isinstance(tensor, mx.nd.NDArray))
 
+    if name is not None:
+        dims_name = name + '_dims'
+        tensor_name = name + '_tensor'
+    else:
+        dims_name = None
+        tensor_name = None
+
     # reduce shape first
     output_dims = mx.nd.zeros((1, size()))
     output_dims[0, rank()] = tensor.shape[0]
     # print(output_dims)
-    allreduce_(output_dims, average=False)
+    allreduce_(output_dims, average=False, name = dims_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
     output_dims_cum = np.cumsum(output_dims.asnumpy())
     new_shape = list(tensor.shape)
     new_shape[0] = int(np.asscalar(output_dims_cum[-1]))
@@ -176,7 +183,7 @@ def allgather(tensor, name=None, priority=0):
     end_ind = int(np.asscalar(output_dims_cum[rank()]))
     output[start_ind:end_ind][:] = tensor
 
-    allreduce_(output, average=False)
+    allreduce_(output, average=False, name = tensor_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
 
     # c_in = tensor.handle
     # c_out = output.handle
@@ -195,12 +202,17 @@ def allreduce_rsp(row_sparse_tensor, average=True, name=None, priority=0, local_
     """
     assert(isinstance(row_sparse_tensor, mx.nd.sparse.RowSparseNDArray))
 
-    # TODO(xcong): local reduction
     # TODO(xcong): empty indices
     # print(row_sparse_tensor.data)
     # print(row_sparse_tensor.indices)
-    reduced_data = allgather(row_sparse_tensor.data)
-    reduced_indices = allgather(row_sparse_tensor.indices)
+    if name is not None:
+        data_name = name + '_data'
+        indices_name = name + '_indices'
+    else:
+        data_name = None
+        indices_name = None
+    reduced_data = allgather(row_sparse_tensor.data, name = data_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
+    reduced_indices = allgather(row_sparse_tensor.indices, name = indices_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
     output = mx.nd.sparse.row_sparse_array((reduced_data, reduced_indices), shape=row_sparse_tensor.shape)
 
     return output
