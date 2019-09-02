@@ -353,10 +353,10 @@ def broadcast_rsp(row_sparse_tensor, root_rank, name=None, priority=0):
     broadcast_(output_dims, root_rank = root_rank, name = dims_name, priority=priority)
 
     data_new_shape = list(row_sparse_tensor.data.shape)
-    data_new_shape[0] = int(np.asscalar(output_dims))
+    data_new_shape[0] = int(np.asscalar(output_dims.asscalar()))
 
     indices_new_shape = list(row_sparse_tensor.indices.shape)
-    indices_new_shape[0] = int(np.asscalar(output_dims))
+    indices_new_shape[0] = int(np.asscalar(output_dims.asscalar()))
 
     output_data = mx.nd.zeros(shape=tuple(data_new_shape), ctx=row_sparse_tensor.data.context,
                                 dtype=row_sparse_tensor.data.dtype)
