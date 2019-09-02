@@ -221,7 +221,7 @@ def allreduce_rsp(row_sparse_tensor, average=True, name=None, priority=0, local_
     # reduce shape first
     output_dims = mx.nd.zeros((1, size()))
     output_dims[0, rank()] = row_sparse_tensor.indices.shape[0]
-    print(row_sparse_tensor.indices.shape[0])
+    # print(row_sparse_tensor.indices.shape[0])
     # print(output_dims)
     allreduce_(output_dims, average=False, name = dims_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
     output_dims_cum = np.cumsum(output_dims.asnumpy())
