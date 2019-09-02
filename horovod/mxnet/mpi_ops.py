@@ -331,3 +331,47 @@ def broadcast_(tensor, root_rank, name=None, priority=0):
             c_in, c_out, name, ctypes.c_int(root_rank),
             ctypes.c_int(priority)))
     return tensor
+
+
+def broadcast_rsp(row_sparse_tensor, root_rank, name=None, priority=0):
+    """
+    A function that performs broadcast for row-sparse ndarrays
+    """
+
+    if name is not None:
+        data_name = name + '_data'
+        indices_name = name + '_indices'
+        dims_name = name + '_dims'
+    else:
+        data_name = None
+        indices_name = None
+        dims_name = None
+
+    # reduce shape first
+    output_dims = mx.nd.array([row_sparse_tensor.indices.shape[0]])
+    # print(output_dims)
+    broadcast_(output_dims, root_rank = root_rank, name = dims_name, priority=priority)
+
+    data_new_shape = list(row_sparse_tensor.data.shape)
+    data_new_shape[0] = int(np.asscalar(output_dims))
+
+    indices_new_shape = list(row_sparse_tensor.indices.shape)
+    indices_new_shape[0] = int(np.asscalar(output_dims))
+
+    output_data = mx.nd.zeros(shape=tuple(data_new_shape), ctx=row_sparse_tensor.data.context,
+                                dtype=row_sparse_tensor.data.dtype)
+    output_indices = mx.nd.zeros(shape=tuple(indices_new_shape), ctx=row_sparse_tensor.indices.context,
+                                dtype=row_sparse_tensor.indices.dtype)
+
+    if rank() == root_rank:
+        output_data[:] = row_sparse_tensor.data
+        output_indices[:] = row_sparse_tensor.indices
+
+    broadcast_(output_data, root_rank = root_rank, name = data_name, priority=priority)
+    broadcast_(output_indices, root_rank = root_rank, name = indices_name, priority=priority)
+
+    output = mx.nd.sparse.row_sparse_array((output_data, output_indices), shape=row_sparse_tensor.shape)
+
+    return output
+
+
