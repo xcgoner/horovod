@@ -196,69 +196,69 @@ def allgather(tensor, name=None, priority=0, local_reduction=False, cross_only=F
 
     return output
 
-def allreduce_rsp(row_sparse_tensor, average=True, name=None, priority=0, local_reduction=False, cross_only=False):
-    """
-    A function that performs allreduce for row-sparse ndarrays
-    """
-    assert(isinstance(row_sparse_tensor, mx.nd.sparse.RowSparseNDArray))
+# def allreduce_rsp(row_sparse_tensor, average=True, name=None, priority=0, local_reduction=False, cross_only=False):
+#     """
+#     A function that performs allreduce for row-sparse ndarrays
+#     """
+#     assert(isinstance(row_sparse_tensor, mx.nd.sparse.RowSparseNDArray))
 
-    # TODO(xcong): local reduction
-    # TODO(xcong): empty indices
-    # print(row_sparse_tensor.data)
-    # print(row_sparse_tensor.indices)
-    if name is not None:
-        data_name = name + '_data'
-        indices_name = name + '_indices'
-        dims_name = name + '_dims'
-    else:
-        data_name = None
-        indices_name = None
-        dims_name = None
-    # reduced_data = allgather(row_sparse_tensor.data, name = data_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
-    # reduced_indices = allgather(row_sparse_tensor.indices, name = indices_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
-    # output = mx.nd.sparse.row_sparse_array((reduced_data, reduced_indices), shape=row_sparse_tensor.shape)
+#     # TODO(xcong): local reduction
+#     # TODO(xcong): empty indices
+#     # print(row_sparse_tensor.data)
+#     # print(row_sparse_tensor.indices)
+#     if name is not None:
+#         data_name = name + '_data'
+#         indices_name = name + '_indices'
+#         dims_name = name + '_dims'
+#     else:
+#         data_name = None
+#         indices_name = None
+#         dims_name = None
+#     # reduced_data = allgather(row_sparse_tensor.data, name = data_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
+#     # reduced_indices = allgather(row_sparse_tensor.indices, name = indices_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
+#     # output = mx.nd.sparse.row_sparse_array((reduced_data, reduced_indices), shape=row_sparse_tensor.shape)
 
-    # reduce shape first
-    output_dims = mx.nd.zeros((1, size()))
-    output_dims[0, rank()] = row_sparse_tensor.indices.shape[0]
-    # print(row_sparse_tensor.indices.shape[0])
-    # print(output_dims)
-    allreduce_(output_dims, average=False, name = dims_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
-    output_dims_cum = np.cumsum(output_dims.asnumpy())
+#     # reduce shape first
+#     output_dims = mx.nd.zeros((1, size()))
+#     output_dims[0, rank()] = row_sparse_tensor.indices.shape[0]
+#     # print(row_sparse_tensor.indices.shape[0])
+#     # print(output_dims)
+#     allreduce_(output_dims, average=False, name = dims_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
+#     output_dims_cum = np.cumsum(output_dims.asnumpy())
 
-    data_new_shape = list(row_sparse_tensor.data.shape)
-    data_new_shape[0] = int(np.asscalar(output_dims_cum[-1]))
+#     data_new_shape = list(row_sparse_tensor.data.shape)
+#     data_new_shape[0] = int(np.asscalar(output_dims_cum[-1]))
 
-    indices_new_shape = list(row_sparse_tensor.indices.shape)
-    indices_new_shape[0] = int(np.asscalar(output_dims_cum[-1]))
+#     indices_new_shape = list(row_sparse_tensor.indices.shape)
+#     indices_new_shape[0] = int(np.asscalar(output_dims_cum[-1]))
 
-    output_data = mx.nd.zeros(shape=tuple(data_new_shape), ctx=row_sparse_tensor.data.context,
-                                dtype=row_sparse_tensor.data.dtype)
-    output_indices = mx.nd.zeros(shape=tuple(indices_new_shape), ctx=row_sparse_tensor.indices.context,
-                                dtype=row_sparse_tensor.indices.dtype)
+#     output_data = mx.nd.zeros(shape=tuple(data_new_shape), ctx=row_sparse_tensor.data.context,
+#                                 dtype=row_sparse_tensor.data.dtype)
+#     output_indices = mx.nd.zeros(shape=tuple(indices_new_shape), ctx=row_sparse_tensor.indices.context,
+#                                 dtype=row_sparse_tensor.indices.dtype)
     
-    if rank() == 0:
-        start_ind = 0
-    else:
-        start_ind = int(np.asscalar(output_dims_cum[rank()-1]))
-    end_ind = int(np.asscalar(output_dims_cum[rank()]))
-    output_data[start_ind:end_ind][:] = row_sparse_tensor.data
-    output_indices[start_ind:end_ind][:] = row_sparse_tensor.indices
+#     if rank() == 0:
+#         start_ind = 0
+#     else:
+#         start_ind = int(np.asscalar(output_dims_cum[rank()-1]))
+#     end_ind = int(np.asscalar(output_dims_cum[rank()]))
+#     output_data[start_ind:end_ind][:] = row_sparse_tensor.data
+#     output_indices[start_ind:end_ind][:] = row_sparse_tensor.indices
 
-    allreduce_(output_data, average=False, name = data_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
-    allreduce_(output_indices, average=False, name = indices_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
+#     allreduce_(output_data, average=False, name = data_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
+#     allreduce_(output_indices, average=False, name = indices_name, priority=priority, local_reduction=local_reduction, cross_only=cross_only)
 
-    start_ind = 0
-    end_ind = int(np.asscalar(output_dims_cum[0]))
-    output = mx.nd.sparse.row_sparse_array((output_data[start_ind:end_ind][:], output_indices[start_ind:end_ind][:]), shape=row_sparse_tensor.shape)
-    for i in range(1,len(data_new_shape)):
-        start_ind = int(np.asscalar(output_dims_cum[i-1]))
-        end_ind = int(np.asscalar(output_dims_cum[i]))
-        output += mx.nd.sparse.row_sparse_array((output_data[start_ind:end_ind][:], output_indices[start_ind:end_ind][:]), shape=row_sparse_tensor.shape)
+#     start_ind = 0
+#     end_ind = int(np.asscalar(output_dims_cum[0]))
+#     output = mx.nd.sparse.row_sparse_array((output_data[start_ind:end_ind][:], output_indices[start_ind:end_ind][:]), shape=row_sparse_tensor.shape)
+#     for i in range(1,len(data_new_shape)):
+#         start_ind = int(np.asscalar(output_dims_cum[i-1]))
+#         end_ind = int(np.asscalar(output_dims_cum[i]))
+#         output += mx.nd.sparse.row_sparse_array((output_data[start_ind:end_ind][:], output_indices[start_ind:end_ind][:]), shape=row_sparse_tensor.shape)
 
-    if average:
-        output /= size()
-    return output
+#     if average:
+#         output /= size()
+#     return output
 
 def broadcast(tensor, root_rank, name=None, priority=0):
     """
@@ -334,45 +334,45 @@ def broadcast_(tensor, root_rank, name=None, priority=0):
     return tensor
 
 
-def broadcast_rsp(row_sparse_tensor, root_rank, name=None, priority=0):
-    """
-    A function that performs broadcast for row-sparse ndarrays
-    """
+# def broadcast_rsp(row_sparse_tensor, root_rank, name=None, priority=0):
+#     """
+#     A function that performs broadcast for row-sparse ndarrays
+#     """
 
-    if name is not None:
-        data_name = name + '_data'
-        indices_name = name + '_indices'
-        dims_name = name + '_dims'
-    else:
-        data_name = None
-        indices_name = None
-        dims_name = None
+#     if name is not None:
+#         data_name = name + '_data'
+#         indices_name = name + '_indices'
+#         dims_name = name + '_dims'
+#     else:
+#         data_name = None
+#         indices_name = None
+#         dims_name = None
 
-    # reduce shape first
-    output_dims = mx.nd.array([row_sparse_tensor.indices.shape[0]])
-    # print(output_dims)
-    broadcast_(output_dims, root_rank = root_rank, name = dims_name, priority=priority)
+#     # reduce shape first
+#     output_dims = mx.nd.array([row_sparse_tensor.indices.shape[0]])
+#     # print(output_dims)
+#     broadcast_(output_dims, root_rank = root_rank, name = dims_name, priority=priority)
 
-    data_new_shape = list(row_sparse_tensor.data.shape)
-    data_new_shape[0] = int(np.asscalar(output_dims.asscalar()))
+#     data_new_shape = list(row_sparse_tensor.data.shape)
+#     data_new_shape[0] = int(np.asscalar(output_dims.asscalar()))
 
-    indices_new_shape = list(row_sparse_tensor.indices.shape)
-    indices_new_shape[0] = int(np.asscalar(output_dims.asscalar()))
+#     indices_new_shape = list(row_sparse_tensor.indices.shape)
+#     indices_new_shape[0] = int(np.asscalar(output_dims.asscalar()))
 
-    output_data = mx.nd.zeros(shape=tuple(data_new_shape), ctx=row_sparse_tensor.data.context,
-                                dtype=row_sparse_tensor.data.dtype)
-    output_indices = mx.nd.zeros(shape=tuple(indices_new_shape), ctx=row_sparse_tensor.indices.context,
-                                dtype=row_sparse_tensor.indices.dtype)
+#     output_data = mx.nd.zeros(shape=tuple(data_new_shape), ctx=row_sparse_tensor.data.context,
+#                                 dtype=row_sparse_tensor.data.dtype)
+#     output_indices = mx.nd.zeros(shape=tuple(indices_new_shape), ctx=row_sparse_tensor.indices.context,
+#                                 dtype=row_sparse_tensor.indices.dtype)
 
-    if rank() == root_rank:
-        output_data[:] = row_sparse_tensor.data
-        output_indices[:] = row_sparse_tensor.indices
+#     if rank() == root_rank:
+#         output_data[:] = row_sparse_tensor.data
+#         output_indices[:] = row_sparse_tensor.indices
 
-    broadcast_(output_data, root_rank = root_rank, name = data_name, priority=priority)
-    broadcast_(output_indices, root_rank = root_rank, name = indices_name, priority=priority)
+#     broadcast_(output_data, root_rank = root_rank, name = data_name, priority=priority)
+#     broadcast_(output_indices, root_rank = root_rank, name = indices_name, priority=priority)
 
-    output = mx.nd.sparse.row_sparse_array((output_data, output_indices), shape=row_sparse_tensor.shape)
+#     output = mx.nd.sparse.row_sparse_array((output_data, output_indices), shape=row_sparse_tensor.shape)
 
-    return output
+#     return output
 
 
