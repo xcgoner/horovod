@@ -124,7 +124,7 @@ inline void PushHorovodOperation(OperationType op_type, NDArray* input,
                                  bool local_reduction = false) {
   auto op_type_name = GetOpTypeName(op_type);
   auto op_name = GetOpName(op_type_name, name);
-  auto ops_param = CreateMpiOpsParam(input, output, nullptr, op_type, op_name, root_rank);
+  auto ops_param = CreateMpiOpsParam(input, output, nullptr, op_type, op_name, root_rank, local_reduction);
 
   // Not in-place
   auto input_var = input->var();

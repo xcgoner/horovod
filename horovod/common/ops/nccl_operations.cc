@@ -16,6 +16,8 @@
 
 #include "nccl_operations.h"
 
+#include <iostream>
+
 namespace horovod {
 namespace common {
 
@@ -188,14 +190,16 @@ NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries,
 
   if (response.local_reduction()) {
     // local reduction
+    // debug
+    std::cout << "local reduction" << std::endl;
     // Do allreduce.
     auto nccl_result = ncclAllReduce(fused_input_data, buffer_data,
                                     (size_t) num_elements,
                                     GetNCCLDataType(first_entry.tensor), ncclSum,
-                                    *nccl_comm_, *stream_);
+                                    *nccl_comm_, *cuda_op_context_.stream);
     nccl_context_->ErrorCheck("ncclAllReduce", nccl_result);
     if (global_state_->timeline.Initialized()) {
-      cuda_context_->RecordEvent(event_queue_, NCCL_ALLREDUCE, *stream_);
+      cuda_context_->RecordEvent(cuda_op_context_.event_queue, NCCL_ALLREDUCE, *cuda_op_context_.stream);
     }
 
     // Copy memory out of the fusion buffer.
@@ -203,11 +207,11 @@ NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries,
       MemcpyOutFusionBuffer(buffer_data, entries);
 
       if (global_state_->timeline.Initialized()) {
-        cuda_context_->RecordEvent(event_queue_, MEMCPY_OUT_FUSION_BUFFER, *stream_);
+        cuda_context_->RecordEvent(cuda_op_context_.event_queue, MEMCPY_OUT_FUSION_BUFFER, *cuda_op_context_.stream);
       }
     }
 
-    return FinalizeCUDAQueue(entries);
+    return cuda_op_context_.FinalizeCUDAQueue(entries);
   }
 
   // Do allreduce.

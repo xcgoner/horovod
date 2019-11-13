@@ -63,8 +63,9 @@ inline MpiOpsParam* CreateMpiOpsParam(NDArray* input, NDArray* output,
                                       MXTensorSharedPtr cpu_tensor,
                                       const OperationType& op_type,
                                       const std::string& op_name,
-                                      int root_rank) {
-  return new MpiOpsParam(input, output, cpu_tensor, op_type, op_name, root_rank);
+                                      int root_rank, 
+                                      bool local_reduction = false) {
+  return new MpiOpsParam(input, output, cpu_tensor, op_type, op_name, root_rank, local_reduction);
 }
 
 void DeleteMpiOpsParam(void* param) {

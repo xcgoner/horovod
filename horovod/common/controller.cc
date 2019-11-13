@@ -578,6 +578,9 @@ Response Controller::ConstructResponse(std::string& name, int joined_size) {
   }
   response.set_devices(devices);
 
+  // local sgd
+  response.set_local_reduction(requests[0].local_reduction());
+
   // Clear all queued up requests for this name. They are now taken care of
   // by the constructed response.
   message_table_.erase(it);
