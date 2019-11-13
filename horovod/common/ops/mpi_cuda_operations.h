@@ -17,8 +17,8 @@
 #ifndef HOROVOD_MPI_CUDA_OPERATIONS_H
 #define HOROVOD_MPI_CUDA_OPERATIONS_H
 
-#include "../mpi_context.h"
 #include "cuda_operations.h"
+#include "../mpi/mpi_context.h"
 
 namespace horovod {
 namespace common {
@@ -27,6 +27,17 @@ class MPI_CUDAAllreduce : public CUDAAllreduce {
 public:
   MPI_CUDAAllreduce(MPIContext* mpi_context, CUDAContext* cuda_context, HorovodGlobalState* global_state);
   virtual ~MPI_CUDAAllreduce()=default;
+
+  Status Execute(std::vector<TensorTableEntry>& entries, const Response& response) override;
+
+protected:
+  MPIContext* mpi_context_;
+};
+
+class MPI_CUDAAllgather : public CUDAAllgather {
+public:
+  MPI_CUDAAllgather(MPIContext* mpi_context, CUDAContext* cuda_context, HorovodGlobalState* global_state);
+  virtual ~MPI_CUDAAllgather()=default;
 
   Status Execute(std::vector<TensorTableEntry>& entries, const Response& response) override;
 

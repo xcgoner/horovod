@@ -11,28 +11,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// =============================================================================
+// ============================================================================
 
-#ifndef HOROVOD_GLOO_CONTEXT_H
-#define HOROVOD_GLOO_CONTEXT_H
+#ifndef HOROVOD_GLOO_STORE_H
+#define HOROVOD_GLOO_STORE_H
 
-#include "gloo/context.h"
-#include "mpi.h"
-
-#include "common.h"
+#include "gloo/rendezvous/store.h"
 
 namespace horovod {
 namespace common {
 
-struct GlooContext {
-  void InitializeFromMPI(const MPI_Comm &mpi_comm, const char* gloo_iface);
+class GlooStore : public gloo::rendezvous::Store {
+public:
+  virtual ~GlooStore()=default;
 
-  void Finalize();
-
-  std::shared_ptr<gloo::Context> ctx;
+  virtual void Finalize() = 0;
 };
 
 } // namespace common
 } // namespace horovod
 
-#endif //HOROVOD_GLOO_CONTEXT_H
+#endif //HOROVOD_GLOO_STORE_H

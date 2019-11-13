@@ -71,11 +71,16 @@ template <class T> const TensorShape MXTensor<T>::shape() const {
 }
 
 template <class T> const void* MXTensor<T>::data() const {
+  // returns the raw data instead of NDArray Tensor
   return TensorUtil::GetData(tensor_);
 }
 
 template <class T> int64_t MXTensor<T>::size() const {
   return TensorUtil::GetSize(tensor_);
+}
+
+template <class T> T* MXTensor<T>::tensor() const {
+  return this->tensor_;
 }
 
 template <class T>
@@ -92,10 +97,6 @@ MXTemporaryBuffer<T>::MXTemporaryBuffer(T* tensor)
 
 template <class T> MXTemporaryBuffer<T>::~MXTemporaryBuffer() {
   TensorUtil::Free(this->tensor_);
-}
-
-template <class T> T* MXTemporaryBuffer<T>::tensor() const {
-  return this->tensor_;
 }
 
 template <class T>
@@ -122,6 +123,14 @@ Status MXOpContext<T>::AllocateOutput(TensorShape shape,
   delete[] shape_array;
   *tensor = std::make_shared<MXTensor<T>>(output_);
   return Status::OK();
+}
+
+template <class T>
+Status
+MXOpContext<T>::AllocateZeros(int64_t num_elements, DataType dtype,
+                                          std::shared_ptr<Tensor>* tensor) {
+  return Status::PreconditionError(
+      "AllocateZeros is not supported for MXNet yet.");
 }
 
 template <class T> Framework MXOpContext<T>::framework() const {

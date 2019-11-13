@@ -46,6 +46,13 @@ local_size = _basics.local_size
 rank = _basics.rank
 local_rank = _basics.local_rank
 mpi_threads_supported = _basics.mpi_threads_supported
+mpi_enabled = _basics.mpi_enabled
+mpi_built = _basics.mpi_built
+gloo_enabled = _basics.gloo_enabled
+gloo_built = _basics.gloo_built
+nccl_built = _basics.nccl_built
+ddl_built = _basics.ddl_built
+mlsl_built = _basics.mlsl_built
 
 
 # Schema: handle -> input, output
@@ -436,3 +443,20 @@ def synchronize(handle):
     mpi_lib.horovod_torch_wait_and_clear(handle)
     _, output = _handle_map.pop(handle)
     return output
+
+
+def join(device=-1):
+    """A function that indicates that the rank finished processing data.
+
+    All ranks that did not call join() continue to process allreduce operations.
+    This function blocks Python thread until all ranks join.
+
+    Arguments:
+        device: An id of the device to create temprorary zero tensors (default -1, CPU)
+
+    Returns:
+        Id of the rank that joined last.
+    """
+    if not _v2_api:
+        raise NotImplementedError("Join Op is not supported for PyTorch < 1.0")
+    return mpi_lib.horovod_torch_join(device)
