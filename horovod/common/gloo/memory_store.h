@@ -13,31 +13,38 @@
 // limitations under the License.
 // ============================================================================
 
-#include "gloo_context.h"
+#ifndef HOROVOD_GLOO_MEMORY_STORE_H
+#define HOROVOD_GLOO_MEMORY_STORE_H
 
-#include "gloo/mpi/context.h"
-#include "gloo/transport/tcp/device.h"
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include "gloo_store.h"
 
 namespace horovod {
 namespace common {
 
-void GlooContext::InitializeFromMPI(const MPI_Comm& mpi_comm,
-                                    const char* gloo_iface) {
-  gloo::transport::tcp::attr attr;
-  // TODO(sihan): add interface load balancing after
-  //  https://github.com/facebookincubator/gloo/issues/183 is resolved
-  attr.iface = gloo_iface;
-  attr.ai_family = AF_UNSPEC;
-  auto dev = gloo::transport::tcp::CreateDevice(attr);
+class MemoryStore : public GlooStore {
+public:
+  virtual ~MemoryStore()=default;
 
-  auto context = std::make_shared<gloo::mpi::Context>(mpi_comm);
-  context->connectFullMesh(dev);
-  ctx = context;
-}
+  void set(const std::string& key, const std::vector<char>& data) override;
 
-void GlooContext::Finalize() {
-    ctx.reset();
-}
+  std::vector<char> get(const std::string& key) override;
+
+  void wait(const std::vector<std::string>& keys) override;
+
+  void wait(const std::vector<std::string>& keys,
+            const std::chrono::milliseconds& timeout) override;
+
+  void Finalize() override;
+
+private:
+  std::unordered_map<std::string, std::vector<char>> map_;
+};
 
 } // namespace common
 } // namespace horovod
+
+#endif //HOROVOD_GLOO_MEMORY_STORE_H

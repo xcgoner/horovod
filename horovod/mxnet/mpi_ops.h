@@ -33,17 +33,19 @@ using namespace horovod::common;
 typedef ::mxnet::NDArray NDArray;
 typedef ::mxnet::Engine::CallbackOnComplete CallbackOnComplete;
 typedef Request::RequestType OperationType;
+typedef std::shared_ptr<MXTensor<NDArray>> MXTensorSharedPtr;
 
 struct MpiOpsParam {
   NDArray* input;
   NDArray* output;
-  NDArray* cpu_tensor;
+  MXTensorSharedPtr cpu_tensor;
   OperationType op_type;
   std::string op_name;
   int root_rank;
   bool local_reduction;
 
-  MpiOpsParam(NDArray* input, NDArray* output, NDArray* cpu_tensor,
+  MpiOpsParam(NDArray* input, NDArray* output,
+              MXTensorSharedPtr cpu_tensor,
               const OperationType& op_type, const std::string& op_name,
               int root_rank, 
               bool local_reduction)
@@ -58,16 +60,11 @@ struct MpiOpsParam {
 };
 
 inline MpiOpsParam* CreateMpiOpsParam(NDArray* input, NDArray* output,
+                                      MXTensorSharedPtr cpu_tensor,
                                       const OperationType& op_type,
                                       const std::string& op_name,
-                                      int root_rank, bool cuda_on_cpu, 
-                                      bool local_reduction = false) {
-  if (cuda_on_cpu) {
-    auto cpu_tensor = TensorUtil::New(CPU_DEVICE_ID, input->dtype());
-    return new MpiOpsParam(nullptr, nullptr, cpu_tensor, op_type, op_name, root_rank, false);
-  }
-
-  return new MpiOpsParam(input, output, nullptr, op_type, op_name, root_rank, local_reduction);
+                                      int root_rank) {
+  return new MpiOpsParam(input, output, cpu_tensor, op_type, op_name, root_rank);
 }
 
 void DeleteMpiOpsParam(void* param) {

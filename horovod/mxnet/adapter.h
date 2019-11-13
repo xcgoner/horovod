@@ -43,6 +43,7 @@ public:
   virtual const TensorShape shape() const override;
   virtual const void* data() const override;
   virtual int64_t size() const override;
+  virtual T* tensor() const;
 
 protected:
   T* tensor_;
@@ -53,7 +54,6 @@ public:
   MXTemporaryBuffer(int device, int dtype);
   MXTemporaryBuffer(T* tensor);
   ~MXTemporaryBuffer();
-  virtual T* tensor() const;
 };
 
 template <class T> class MXOpContext : public OpContext {
@@ -64,6 +64,8 @@ public:
                      std::shared_ptr<PersistentBuffer>* tensor) override;
   virtual Status AllocateOutput(TensorShape shape,
                                 std::shared_ptr<Tensor>* tensor) override;
+  virtual Status AllocateZeros(int64_t num_elements, DataType dtype,
+                               std::shared_ptr<Tensor>* tensor) override;
   virtual Framework framework() const override;
 
 private:

@@ -26,17 +26,6 @@ for gpu in gpus:
 if gpus:
     tf.config.experimental.set_visible_devices(gpus[hvd.local_rank()], 'GPU')
 
-mnist_model = tf.keras.Sequential([
-    tf.keras.layers.Conv2D(16, [3, 3], activation='relu'),
-    tf.keras.layers.Conv2D(16, [3, 3], activation='relu'),
-    tf.keras.layers.GlobalAveragePooling2D(),
-    tf.keras.layers.Dense(10)
-])
-loss = tf.losses.SparseCategoricalCrossentropy(from_logits=True)
-
-# Horovod: adjust learning rate based on number of GPUs.
-opt = tf.optimizers.Adam(0.001 * hvd.size())
-
 (mnist_images, mnist_labels), _ = \
     tf.keras.datasets.mnist.load_data(path='mnist-%d.npz' % hvd.rank())
 
@@ -44,7 +33,22 @@ dataset = tf.data.Dataset.from_tensor_slices(
     (tf.cast(mnist_images[..., tf.newaxis] / 255.0, tf.float32),
              tf.cast(mnist_labels, tf.int64))
 )
-dataset = dataset.repeat().shuffle(1000).batch(32)
+dataset = dataset.repeat().shuffle(10000).batch(128)
+
+mnist_model = tf.keras.Sequential([
+    tf.keras.layers.Conv2D(32, [3, 3], activation='relu'),
+    tf.keras.layers.Conv2D(64, [3, 3], activation='relu'),
+    tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+    tf.keras.layers.Dropout(0.25),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dropout(0.5),
+    tf.keras.layers.Dense(10, activation='softmax')
+])
+loss = tf.losses.SparseCategoricalCrossentropy()
+
+# Horovod: adjust learning rate based on number of GPUs.
+opt = tf.optimizers.Adam(0.001 * hvd.size())
 
 checkpoint_dir = './checkpoints'
 checkpoint = tf.train.Checkpoint(model=mnist_model, optimizer=opt)
@@ -53,8 +57,8 @@ checkpoint = tf.train.Checkpoint(model=mnist_model, optimizer=opt)
 @tf.function
 def training_step(images, labels, first_batch):
     with tf.GradientTape() as tape:
-        logits = mnist_model(images, training=True)
-        loss_value = loss(labels, logits)
+        probs = mnist_model(images, training=True)
+        loss_value = loss(labels, probs)
 
     # Horovod: add Horovod Distributed GradientTape.
     tape = hvd.DistributedGradientTape(tape)
@@ -76,7 +80,7 @@ def training_step(images, labels, first_batch):
 
 
 # Horovod: adjust number of steps based on number of GPUs.
-for batch, (images, labels) in enumerate(dataset.take(20000 // hvd.size())):
+for batch, (images, labels) in enumerate(dataset.take(10000 // hvd.size())):
     loss_value = training_step(images, labels, batch == 0)
 
     if batch % 10 == 0 and hvd.local_rank() == 0:
