@@ -127,6 +127,10 @@ bool Request::local_reduction() const { return local_reduction_; }
 
 void Request::set_local_reduction(bool value) { local_reduction_ = value; }
 
+bool Request::cross_only() const { return cross_only_; }
+
+void Request::set_cross_only(bool value) { cross_only_ = value; }
+
 namespace {
 
 void Request_ParseFromWire(Request& request,
@@ -139,6 +143,9 @@ void Request_ParseFromWire(Request& request,
   request.set_device(obj->device());
   request.set_tensor_shape(std::vector<int64_t>(obj->tensor_shape()->begin(),
                                                 obj->tensor_shape()->end()));
+  // local sgd
+  request.set_local_reduction(obj->local_reduction());
+  request.set_cross_only(obj->cross_only());
 }
 
 void Request_SerializeToWire(const Request& request,
@@ -157,6 +164,11 @@ void Request_SerializeToWire(const Request& request,
   request_builder.add_root_rank(request.root_rank());
   request_builder.add_device(request.device());
   request_builder.add_tensor_shape(tensor_shape_wire);
+  
+  // local sgd
+  request_builder.add_local_reduction(request.local_reduction());
+  request_builder.add_cross_only(request.cross_only());
+
   obj = request_builder.Finish();
 }
 
@@ -336,6 +348,10 @@ bool Response::local_reduction() const { return local_reduction_; }
 
 void Response::set_local_reduction(bool value) { local_reduction_ = value; }
 
+bool Response::cross_only() const { return cross_only_; }
+
+void Response::set_cross_only(bool value) { cross_only_ = value; }
+
 void Response_ParseFromWire(Response& response,
                             const wire::Response* obj) {
   response.set_response_type((Response::ResponseType) obj->response_type());
@@ -348,6 +364,9 @@ void Response_ParseFromWire(Response& response,
       std::vector<int32_t>(obj->devices()->begin(), obj->devices()->end()));
   response.set_tensor_sizes(std::vector<int64_t>(obj->tensor_sizes()->begin(),
                                                  obj->tensor_sizes()->end()));
+  // local sgd
+  response.set_local_reduction(obj->local_reduction());
+  response.set_cross_only(obj->cross_only());
 }
 
 void Response::ParseFromBytes(Response& response, const uint8_t* input) {
@@ -374,6 +393,11 @@ void Response_SerializeToWire(const Response& response,
   response_builder.add_error_message(error_message_wire);
   response_builder.add_devices(devices_wire);
   response_builder.add_tensor_sizes(tensor_sizes_wire);
+
+  // local sgd
+  response_builder.add_local_reduction(response.local_reduction());
+  response_builder.add_cross_only(response.cross_only());
+
   obj = response_builder.Finish();
 }
 

@@ -754,7 +754,8 @@ Status EnqueueTensorAllreduce(std::shared_ptr<OpContext> context,
                               std::shared_ptr<ReadyEvent> ready_event,
                               const std::string name, const int device,
                               StatusCallback callback, 
-                              const bool local_reduction) {
+                              const bool local_reduction, 
+                              const bool cross_only) {
   Request message;
   message.set_request_rank(horovod_global.controller->GetRank());
   message.set_tensor_name(name);
@@ -766,6 +767,8 @@ Status EnqueueTensorAllreduce(std::shared_ptr<OpContext> context,
   }
   // local sgd
   message.set_local_reduction(local_reduction);
+  message.set_cross_only(cross_only);
+  // std::cout << "EnqueueTensorAllreduce: " << message.local_reduction() << std::endl;
 
   TensorTableEntry e;
   e.tensor_name = name;

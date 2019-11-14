@@ -16,7 +16,8 @@
 
 #include "nccl_operations.h"
 
-#include <iostream>
+// local sgd debug
+#include "../logging.h"
 
 namespace horovod {
 namespace common {
@@ -190,7 +191,7 @@ NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries,
 
   if (response.local_reduction()) {
     // local reduction
-    // debug
+    // local sgd debug
     std::cout << "local reduction" << std::endl;
     // Do allreduce.
     auto nccl_result = ncclAllReduce(fused_input_data, buffer_data,
@@ -276,31 +277,41 @@ NCCLHierarchicalAllreduce::Execute(std::vector<TensorTableEntry>& entries,
                                  : buffer_len_per_rank;
 
   auto& timeline = global_state_->timeline;
-  if (num_elements_per_rank > 0) {
-    auto nccl_result = ncclReduceScatter(fused_input_data,
-                                         buffer_data_at_rank_offset,
-                                         (size_t) num_elements_per_rank,
-                                         GetNCCLDataType(first_entry.tensor),
-                                         ncclSum, *nccl_comm_, *cuda_op_context_.stream);
-    nccl_context_->ErrorCheck("ncclReduceScatter", nccl_result);
-    if (global_state_->timeline.Initialized()) {
-      cuda_context_->RecordEvent(cuda_op_context_.event_queue, NCCL_REDUCESCATTER, *cuda_op_context_.stream);
-    }
-  }
 
-  if (num_elements_remaining > 0) {
-    // Reduce the remaining data at local_size-1 to append to
-    // existing buffer
-    auto nccl_result = ncclReduce(fused_input_data_remainder,
-                                  buffer_data_remainder,
-                                  (size_t) num_elements_remaining,
-                                  GetNCCLDataType(first_entry.tensor), ncclSum,
-                                  root_rank, *nccl_comm_, *cuda_op_context_.stream);
-    nccl_context_->ErrorCheck("ncclReduce", nccl_result);
-    if (global_state_->timeline.Initialized()) {
-      cuda_context_->RecordEvent(cuda_op_context_.event_queue, NCCL_REDUCE, *cuda_op_context_.stream);
+  if (!response.cross_only()) {
+    // skip reduce if cross_only == True
+    // local sgd debug
+    // std::cout << "global reduction" << std::endl;
+    if (num_elements_per_rank > 0) {
+      auto nccl_result = ncclReduceScatter(fused_input_data,
+                                          buffer_data_at_rank_offset,
+                                          (size_t) num_elements_per_rank,
+                                          GetNCCLDataType(first_entry.tensor),
+                                          ncclSum, *nccl_comm_, *cuda_op_context_.stream);
+      nccl_context_->ErrorCheck("ncclReduceScatter", nccl_result);
+      if (global_state_->timeline.Initialized()) {
+        cuda_context_->RecordEvent(cuda_op_context_.event_queue, NCCL_REDUCESCATTER, *cuda_op_context_.stream);
+      }
+    }
+
+    if (num_elements_remaining > 0) {
+      // Reduce the remaining data at local_size-1 to append to
+      // existing buffer
+      auto nccl_result = ncclReduce(fused_input_data_remainder,
+                                    buffer_data_remainder,
+                                    (size_t) num_elements_remaining,
+                                    GetNCCLDataType(first_entry.tensor), ncclSum,
+                                    root_rank, *nccl_comm_, *cuda_op_context_.stream);
+      nccl_context_->ErrorCheck("ncclReduce", nccl_result);
+      if (global_state_->timeline.Initialized()) {
+        cuda_context_->RecordEvent(cuda_op_context_.event_queue, NCCL_REDUCE, *cuda_op_context_.stream);
+      }
     }
   }
+  // else {
+  // local sgd debug
+  //   std::cout << "cross reduction" << std::endl;
+  // }
 
   if (global_state_->controller->IsHomogeneous() || is_root_rank) {
     // cudaHostAlloc is significantly slower than malloc.  Pre-allocating

@@ -43,19 +43,22 @@ struct MpiOpsParam {
   std::string op_name;
   int root_rank;
   bool local_reduction;
+  bool cross_only;
 
   MpiOpsParam(NDArray* input, NDArray* output,
               MXTensorSharedPtr cpu_tensor,
               const OperationType& op_type, const std::string& op_name,
               int root_rank, 
-              bool local_reduction)
+              bool local_reduction, 
+              bool cross_only)
       : input(input),
         output(output),
         cpu_tensor(cpu_tensor),
         op_type(op_type),
         op_name(op_name),
         root_rank(root_rank), 
-        local_reduction(local_reduction) {
+        local_reduction(local_reduction), 
+        cross_only(cross_only) {
   }
 };
 
@@ -64,8 +67,9 @@ inline MpiOpsParam* CreateMpiOpsParam(NDArray* input, NDArray* output,
                                       const OperationType& op_type,
                                       const std::string& op_name,
                                       int root_rank, 
-                                      bool local_reduction = false) {
-  return new MpiOpsParam(input, output, cpu_tensor, op_type, op_name, root_rank, local_reduction);
+                                      bool local_reduction = false, 
+                                      bool cross_only = false) {
+  return new MpiOpsParam(input, output, cpu_tensor, op_type, op_name, root_rank, local_reduction, cross_only);
 }
 
 void DeleteMpiOpsParam(void* param) {
@@ -76,7 +80,8 @@ void DeleteMpiOpsParam(void* param) {
 extern "C" int horovod_mxnet_allreduce_async(NDArray* input, NDArray* output,
                                              const char* name, bool average,
                                              int priority, 
-                                             bool local_reduction);
+                                             bool local_reduction, 
+                                             bool cross_only);
 extern "C" int horovod_mxnet_allgather_async(NDArray* input, NDArray* output,
                                              const char* name, int priority);
 extern "C" int horovod_mxnet_broadcast_async(NDArray* input, NDArray* output,

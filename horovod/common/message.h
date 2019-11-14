@@ -90,6 +90,8 @@ public:
   // local sgd
   bool local_reduction() const;
   void set_local_reduction(bool value);
+  bool cross_only() const;
+  void set_cross_only(bool value);
 
 private:
   int32_t request_rank_ = 0;
@@ -102,6 +104,7 @@ private:
 
   // local sgd
   bool local_reduction_;
+  bool cross_only_;
 };
 
 class RequestList {
@@ -190,6 +193,8 @@ public:
   // local sgd
   bool local_reduction() const;
   void set_local_reduction(bool value);
+  bool cross_only() const;
+  void set_cross_only(bool value);
 
 private:
   ResponseType response_type_ = ResponseType::ALLREDUCE;
@@ -201,6 +206,7 @@ private:
 
   // local sgd
   bool local_reduction_;
+  bool cross_only_;
 };
 
 class ResponseList {

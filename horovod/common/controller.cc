@@ -579,7 +579,15 @@ Response Controller::ConstructResponse(std::string& name, int joined_size) {
   response.set_devices(devices);
 
   // local sgd
-  response.set_local_reduction(requests[0].local_reduction());
+  if (message_type == Request::ALLREDUCE) {
+    response.set_local_reduction(requests[0].local_reduction());
+    response.set_cross_only(requests[0].cross_only());
+    // std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
+  }
+  else {
+    response.set_local_reduction(false);
+    response.set_cross_only(false);
+  }
 
   // Clear all queued up requests for this name. They are now taken care of
   // by the constructed response.
