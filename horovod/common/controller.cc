@@ -168,6 +168,8 @@ ResponseList Controller::ComputeResponseList(std::atomic_bool& shut_down,
     // otherwise we need to add cached messages to response list.
   }
 
+  std::cout << "need_communication: " << need_communication << std::endl;
+
   if (!need_communication) {
     // If all messages in queue have responses in cache, use fast path with
     // no additional coordination.
