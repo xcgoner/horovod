@@ -368,6 +368,7 @@ Response Controller::ConstructResponse(std::string& name, int joined_size) {
   // are identical.
   auto data_type = requests[0].tensor_type();
   for (unsigned int i = 1; i < requests.size(); ++i) {
+    std::cout << "ConstructResponse: request " << i << " " << requests[i].local_reduction() << std::endl;
     auto request_type = requests[i].tensor_type();
     if (data_type != request_type) {
       error = true;
@@ -579,8 +580,8 @@ Response Controller::ConstructResponse(std::string& name, int joined_size) {
   response.set_devices(devices);
 
   // local sgd
-  std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
   if (message_type == Request::ALLREDUCE) {
+    // std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
     response.set_local_reduction(requests[0].local_reduction());
     response.set_cross_only(requests[0].cross_only());
   }
