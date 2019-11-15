@@ -582,7 +582,7 @@ Response Controller::ConstructResponse(std::string& name, int joined_size) {
   if (message_type == Request::ALLREDUCE) {
     response.set_local_reduction(requests[0].local_reduction());
     response.set_cross_only(requests[0].cross_only());
-    // std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
+    std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
   }
   else {
     response.set_local_reduction(false);
