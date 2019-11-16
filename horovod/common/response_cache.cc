@@ -56,7 +56,10 @@ ResponseCache::CacheState ResponseCache::cached(const Request& message) const {
     auto& cache_params = std::get<1>(*cache_iters_[cache_bit]);
     return (cache_params.device == message.device() &&
             cache_params.dtype == message.tensor_type() &&
-            cache_params.shape == message.tensor_shape())
+            cache_params.shape == message.tensor_shape() &&
+            cache_params.local_reduction == message.local_reduction() &&
+            cache_params.cross_only == message.cross_only()
+            )
                ? CacheState::HIT
                : CacheState::INVALID;
   } else {
@@ -76,7 +79,10 @@ ResponseCache::cached(const Response& response,
     auto& cache_params = std::get<1>(*cache_iters_[cache_bit]);
     return (cache_params.device == params.device &&
             cache_params.dtype == params.dtype &&
-            cache_params.shape == params.shape)
+            cache_params.shape == params.shape &&
+            cache_params.local_reduction == params.local_reduction &&
+            cache_params.cross_only == params.cross_only
+            )
                ? CacheState::HIT
                : CacheState::INVALID;
   } else {
@@ -157,6 +163,8 @@ void ResponseCache::put(const Response& response, TensorQueue& tensor_queue) {
       new_response.set_response_type(response.response_type());
       new_response.set_devices(response.devices());
       new_response.set_tensor_sizes(response.tensor_sizes());
+      new_response.set_local_reduction(response.local_reduction());
+      new_response.set_cross_only(response.cross_only());
 
       // Populate tensor parameters from tensor_queue entry
       const auto& tensor_entry = tensor_queue.GetTensorEntry(name);
@@ -164,6 +172,8 @@ void ResponseCache::put(const Response& response, TensorQueue& tensor_queue) {
       params.device = tensor_entry.device;
       params.dtype = tensor_entry.tensor->dtype();
       params.shape = tensor_entry.tensor->shape().to_vector();
+      params.local_reduction = response.local_reduction();
+      params.cross_only = response.cross_only();
 
       this->put_(new_response, params);
     }
@@ -174,6 +184,8 @@ void ResponseCache::put(const Response& response, TensorQueue& tensor_queue) {
     params.device = tensor_entry.device;
     params.dtype = tensor_entry.tensor->dtype();
     params.shape = tensor_entry.tensor->shape().to_vector();
+    params.local_reduction = response.local_reduction();
+    params.cross_only = response.cross_only();
 
     this->put_(response, params);
   }

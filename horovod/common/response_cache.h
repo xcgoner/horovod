@@ -39,6 +39,8 @@ struct TensorParams {
   DataType dtype;
   std::vector<int64_t> shape;
   int32_t device;
+  bool local_reduction;
+  bool cross_only;
 };
 
 // LRU cache of Responses
