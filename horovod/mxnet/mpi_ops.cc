@@ -233,6 +233,7 @@ extern "C" int horovod_mxnet_allreduce_async(NDArray* input, NDArray* output,
                                   name, priority);
   }
 #else
+  // local sgd debug
   // std::cout << "horovod_mxnet_allreduce_async: " << local_reduction << std::endl;
   // must send default rank=-1
   PushHorovodOperation(OperationType::ALLREDUCE, input, output,

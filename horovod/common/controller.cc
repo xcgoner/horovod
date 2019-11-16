@@ -168,7 +168,8 @@ ResponseList Controller::ComputeResponseList(std::atomic_bool& shut_down,
     // otherwise we need to add cached messages to response list.
   }
 
-  std::cout << "need_communication: " << need_communication << std::endl;
+  // local sgd debug
+  // std::cout << "need_communication: " << need_communication << std::endl;
 
   if (!need_communication) {
     // If all messages in queue have responses in cache, use fast path with
@@ -370,7 +371,8 @@ Response Controller::ConstructResponse(std::string& name, int joined_size) {
   // are identical.
   auto data_type = requests[0].tensor_type();
   for (unsigned int i = 1; i < requests.size(); ++i) {
-    std::cout << "ConstructResponse: request " << i << " " << requests[i].local_reduction() << std::endl;
+    // local sgd debug
+    // std::cout << "ConstructResponse: request " << i << " " << requests[i].local_reduction() << std::endl;
     auto request_type = requests[i].tensor_type();
     if (data_type != request_type) {
       error = true;
@@ -583,7 +585,8 @@ Response Controller::ConstructResponse(std::string& name, int joined_size) {
 
   // local sgd
   if (message_type == Request::ALLREDUCE) {
-    std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
+    // local sgd debug
+    // std::cout << "ConstructResponse: " << requests[0].local_reduction() << std::endl;
     response.set_local_reduction(requests[0].local_reduction());
     response.set_cross_only(requests[0].cross_only());
   }
