@@ -121,8 +121,8 @@ def allreduce_(tensor, average=True, name=None, priority=0, local_reduction=Fals
     c_out = tensor.handle
 
     # local sgd debug
-    if local_reduction:
-        print('python allreduce_ local reduction')
+    # if local_reduction:
+    #     print('python allreduce_ local reduction')
 
     if isinstance(name, string_types):
         check_call(MPI_MXNET_LIB_CTYPES.horovod_mxnet_allreduce_async(
